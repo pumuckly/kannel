@@ -79,6 +79,7 @@
 #include "gw/dlr.h"
 #include "gw/heartbeat.h"
 #include "gw/meta_data.h"
+#include "gw/bb_store.h"
 
 #undef GW_NAME
 #undef GW_VERSION
@@ -125,6 +126,7 @@ static Octstr *smppbox_id;
 static Octstr *our_system_id;
 static Octstr *route_to_smsc;
 static time_t smpp_timeout;
+static Octstr *alt_charset;
 
 static int systemidisboxcid;
 static int enablepam;
@@ -967,10 +969,10 @@ static List *msg_to_pdu(Boxc *box, Msg *msg)
             /*
              * convert to the given alternative charset
              */
-            if (charset_convert(pdu->u.deliver_sm.short_message, "ISO-8859-1",
-                                octstr_get_cstr(box->alt_charset)) != 0)
+            if (charset_convert(pdu->u.deliver_sm.short_message, "UTF-8", octstr_get_cstr(box->alt_charset)) != 0)
                 error(0, "Failed to convert msgdata from charset <%s> to <%s>, will send as is.",
-                             "ISO-8859-1", octstr_get_cstr(box->alt_charset));
+                             octstr_get_cstr(box->alt_charset), "UTF-8");
+	    pdu->u.deliver_sm.sm_length = octstr_len(pdu->u.deliver_sm.short_message);
         }
     }
 
@@ -1193,9 +1195,9 @@ static Msg *pdu_to_msg(Boxc *box, SMPP_PDU *pdu, long *reason)
              * unless it was specified binary, ie. UDH indicator was detected
              */
             if (box->alt_charset && msg->sms.coding != DC_8BIT) {
-                if (charset_convert(msg->sms.msgdata, octstr_get_cstr(box->alt_charset), "ISO-8859-1") != 0)
+                if (charset_convert(msg->sms.msgdata, octstr_get_cstr(box->alt_charset), "UTF-8") != 0)
                     error(0, "Failed to convert msgdata from charset <%s> to <%s>, will leave as is.",
-                             octstr_get_cstr(box->alt_charset), "ISO-8859-1");
+                             "UTF-8", octstr_get_cstr(box->alt_charset));
                 msg->sms.coding = DC_7BIT;
             } else { /* assume GSM 03.38 7-bit alphabet */
                 charset_gsm_to_utf8(msg->sms.msgdata);
@@ -1379,9 +1381,9 @@ static Msg *data_sm_to_msg(Boxc *box, SMPP_PDU *pdu, long *reason)
              * unless it was specified binary, ie. UDH indicator was detected
              */
             if (box->alt_charset && msg->sms.coding != DC_8BIT) {
-                if (charset_convert(msg->sms.msgdata, octstr_get_cstr(box->alt_charset), "ISO-8859-1") != 0)
+                if (charset_convert(msg->sms.msgdata, "UTF-8", octstr_get_cstr(box->alt_charset)) != 0)
                     error(0, "Failed to convert msgdata from charset <%s> to <%s>, will leave as is.",
-                             octstr_get_cstr(box->alt_charset), "ISO-8859-1");
+                             "UTF-8", octstr_get_cstr(box->alt_charset));
                 msg->sms.coding = DC_7BIT;
             } else { /* assume GSM 03.38 7-bit alphabet */
                 charset_gsm_to_utf8(msg->sms.msgdata);
@@ -1619,13 +1621,13 @@ static void handle_pdu(Connection *conn, Boxc *box, SMPP_PDU *pdu) {
 				msgid = octstr_create(id);
 				dict_put(box->msg_acks, msgid, resp);
 				resp = NULL;
-				if (msg != msg2) {
-					msg_destroy(msg);
-				}
 				send_msg(box->bearerbox_connection, box, msg2);
 				if (parts_list) {
 					/* destroy values */
 					gwlist_destroy(parts_list, msg_destroy_item);
+				}
+				else if (msg != msg2) {
+					msg_destroy(msg);
 				}
 			}
 		}
@@ -1665,13 +1667,13 @@ static void handle_pdu(Connection *conn, Boxc *box, SMPP_PDU *pdu) {
 				dict_put(box->msg_acks, msgid, resp);
 				octstr_destroy(msgid);
 				resp = NULL;
-				if (msg != msg2) {
-					msg_destroy(msg);
-				}
 				send_msg(box->bearerbox_connection, box, msg2);
 				if (parts_list) {
 					/* destroy values */
 					gwlist_destroy(parts_list, msg_destroy_item);
+				}
+				else if (msg != msg2) {
+					msg_destroy(msg);
 				}
 			}
 		}
@@ -1736,7 +1738,8 @@ static Boxc *boxc_create(int fd, Octstr *ip, int ssl)
     boxc->boxc_id = NULL;
     boxc->routable = 0;
     boxc->smpp_pdu_counter = counter_create();
-    boxc->alt_charset = NULL; /* todo: get from config */
+    boxc->alt_charset = NULL;
+    if (NULL != alt_charset) boxc->alt_charset = octstr_duplicate(alt_charset); /* todo: make this configurable on a per-esme basis */
     boxc->version = 0x33; /* default value, set upon receiving a bind */
     boxc->route_to_smsc = route_to_smsc ? octstr_duplicate(route_to_smsc) : NULL;
     boxc->msg_acks = dict_create(256, smpp_pdu_destroy_item);
@@ -1780,6 +1783,9 @@ static void boxc_destroy(Boxc *boxc)
     }
     if (boxc->client_ip)
 	    octstr_destroy(boxc->client_ip);
+    if (boxc->alt_charset) {
+	    octstr_destroy(boxc->alt_charset);
+    }
     dict_destroy(boxc->msg_acks);
     dict_destroy(boxc->deliver_acks);
     if (boxc->sms_service)
@@ -2012,16 +2018,16 @@ static void bearerbox_to_smpp(void *arg)
 			Octstr *text;
 
 			text = octstr_duplicate(msg->sms.msgdata);
-			if(0 == octstr_recode (octstr_imm("iso-8859-1"), octstr_imm("UTF-16BE"), text)) {
+			if(0 == octstr_recode (octstr_imm("UTF-8"), octstr_imm("UTF-16BE"), text)) {
 				if(octstr_search(text, octstr_imm("&#"), 0) == -1) {
 					/* XXX I'm trying to search for &#xxxx; text, which indicates that the
 					* text couldn't be recoded.
 					* We should use other function to do the recode or detect it using
 					* other method */
-					info(0, "MO message converted from UCS-2 to ISO-8859-1");
+					info(0, "MO message converted from UCS-2 to UTF-8");
 					octstr_destroy(msg->sms.msgdata);
 					msg->sms.msgdata = octstr_duplicate(text);
-					msg->sms.charset = octstr_create("ISO-8859-1");
+					msg->sms.charset = octstr_create("UTF-8");
 					msg->sms.coding = DC_7BIT;
 					converted=1;
 				} else {
@@ -2430,7 +2436,7 @@ static void init_smppbox(Cfg *cfg)
 	/* init storage store */
 	grp= cfg_get_single_group(cfg, octstr_imm("core"));
 	if (grp != NULL) {
-		log = cfg_get(grp, octstr_imm("log-file"));
+		log = cfg_get(grp, octstr_imm("store-file"));
 		if (log != NULL) {
 			warning(0, "'store-file' option deprecated, please use 'store-location' and 'store-type' instead.");
 			val = octstr_create("file");
@@ -2438,8 +2444,11 @@ static void init_smppbox(Cfg *cfg)
 			log = cfg_get(grp, octstr_imm("store-location"));
 			val = cfg_get(grp, octstr_imm("store-type"));
 		}
-		if (store_init(cfg, val, log, store_dump_freq, msg_pack, msg_unpack_wrapper) == -1)
-			panic(0, "Could not start with store init failed.");
+		if (val != NULL) {
+			if (store_init(cfg, val, log, store_dump_freq, msg_pack, msg_unpack_wrapper) == -1) {
+				panic(0, "Could not start with store init failed.");
+			}
+		}
 		octstr_destroy(val);
 		octstr_destroy(log);
 	}
@@ -2476,6 +2485,7 @@ static void init_smppbox(Cfg *cfg)
 	if (our_system_id == NULL) {
 		panic(0, "our-system-id is not set.");
 	}
+	alt_charset = cfg_get(grp, octstr_imm("alt-charset"));
 
 	/* setup logfile stuff */
 	logfile = cfg_get(grp, octstr_imm("log-file"));

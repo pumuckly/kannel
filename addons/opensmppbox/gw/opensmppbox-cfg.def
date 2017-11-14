@@ -80,6 +80,7 @@ SINGLE_GROUP(opensmppbox,
 	OCTSTR(use-systemid-as-smsboxid)
 	OCTSTR(enable-pam)
 	OCTSTR(pam-acl)
+	OCTSTR(alt-charset)
 )
 
 MULTI_GROUP(smsc-route,

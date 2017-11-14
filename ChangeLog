@@ -1,3 +1,61 @@
+2017-10-13  Stipe Tolj  <stolj at kannel.org>
+    * doc/userguide/userguide.xml: document 'const' directive in context
+      group 'smpp-tlv'.
+    * gw/smsc/smpp_pdu.[ch]: implement smpp_tlv_add_constant() to add any
+      configured constant values if the corresponding TLV values have not been
+      set via the meta-data part.
+    * gw/smsc/smsc_smpp.c: call smpp_tlv_add_constant() to set contant values.
+    * gwlib/cfg.def: add 'const' to 'group = smpp-tlv'.
+    
+2017-09-26  Stipe Tolj  <stolj at kannel.org>
+    * gwlib/dbpool_redis.c: fix segfaulting when under high load and stopping
+      redis-server connections.
+
+2017-07-19 Alexander Malysh <amalysh at kannel.org>
+    * gw/smsc/smsc_smpp.c: Fixed sending of long messages.
+      This fixes #769.
+
+2017-06-16  Stipe Tolj  <stolj at kannel.org>
+    * doc/userguide/userguide.xml: add documentation for config directives
+      'ssl-[client|server]-cipher-list'.
+    * gwlib/cfg.def: add above config directives to 'group = core'.
+    * gwlib/conn.[ch]: ensure openssl engine cleanup is performed more cleanly,
+      this avoids various static memory leaks reported by valgrind, and add
+      encryption suite and cipher select/de-select configuration.
+    This patchset allows configuring the SSL/TLS client/server side connection
+    by defining which suites and ciphers should be used. The corresponding
+    cipher stings are defined in the openssl documentation part.
+    
+2017-04-11  Stipe Tolj  <stolj at kannel.org>
+    * gw/smsc/http/generic.c: provides the missing MO part for the generic type
+      from the patchset dated 2017-03-14, allowing to send UTF-8 data, which
+      can then be forwarded as UCS-2 towards the smsbox connection. We transcode
+      ONLY if an alt-charset is set and a coding value has been provided.
+
+2017-04-10  Stipe Tolj  <stolj at kannel.org>
+    * gw/smsc/smsc_http.c: fix transcoding by using UTF-16BE as UCS-2 encoding 
+      indication.
+
+2017-03-14  Stipe Tolj  <stolj at kannel.org>
+    * doc/userguide/userguide.xml: remove 'wapme' reference for HTTP SMSC type.
+    * gw/smsc/smsc_http.c: re-considering an older issue, when having UCS2 
+      payload from the smsbox connection side. All major HTTP API will NEED
+      a unique encoding that is injected, and we will use 'alt-charset = UTF-8'
+      to allow setting a config diretive to convert ANY encoding to UTF-8
+      towards the upstream, which reflects an unique input encoding, otherwise
+      there is no way to distinguish this. This allows keeping the currentlogic 
+      if no 'alt-charset' is set. 
+    * gw/smsc/http/wapme.c: removed the 'wapme' type as it is dead for quite 
+      some time now.
+    This patchset ensures that we have a construct (via setting a config
+    directive, alt-charset) to uniquely provision MTs to the upstream SMSC.
+    [Msg-Id: <4D76BF9C.7070700@tolj.org>]
+      
+2017-02-22  Stipe Tolj  <stolj at kannel.org>
+    * gwlib/http.c: fix missing keep-alive indication when we DO keep the 
+      connection persistent as a server, cleaned up the corresponding 
+      negotiation constraint to fit the RFC2616 requirement.
+      
 2017-01-04  Stipe Tolj  <stolj at kannel.org>
     * gw/msg.h: add msg admin 'cmd_feature' to allow passing feature on/off 
       commands within the inter-box communication. NLC.

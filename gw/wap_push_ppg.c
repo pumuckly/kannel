@@ -70,7 +70,7 @@
  *
  * In addition, RFCs 1521 and 2045 are referred.
  *
- * By Aarno Syvänen for Wapit Ltd, Wiral Ltd and Global Networks Inc. 
+ * By Aarno Syv�nen for Wapit Ltd, Wiral Ltd and Global Networks Inc. 
  */
 
 #include <time.h>
@@ -805,7 +805,7 @@ static void pap_request_thread(void *arg)
                        octstr_get_cstr(url), octstr_get_cstr(ip));
                  goto ferror;
             }
-        } else {                        /* Jörg, this wont disappear again */
+        } else {                        /* J�rg, this wont disappear again */
 	    username = octstr_imm("");
 	}
 

@@ -25,4 +25,6 @@ SINGLE_GROUP(sqlbox,
     OCTSTR(ssl-server-cert-file)
     OCTSTR(ssl-server-key-file)
     OCTSTR(ssl-trusted-ca-file)
+    OCTSTR(ssl-client-cipher-list)
+    OCTSTR(ssl-server-cipher-list)
 )

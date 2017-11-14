@@ -64,7 +64,7 @@
  * Repetitions and use of multiple threads can be requested, in addition of 
  * setting of some headers. 
  *
- * By Aarno Syvänen for Wiral Ltd and Global Networks Inc.
+ * By Aarno Syv�nen for Wiral Ltd and Global Networks Inc.
  */
 
 #define MAX_THREADS 1024

@@ -1085,6 +1085,25 @@ static SMPP_PDU *msg_to_pdu(SMPP *smpp, Msg *msg)
 
     pdu->u.submit_sm.sm_length = octstr_len(pdu->u.submit_sm.short_message);
 
+    /* check long messages, because:
+     * The sm_length parameter specifies the length of the short_message parameter in octets.
+     * The sm_length should be set to 0 in the submit_sm, submit_multi, and deliver_sm PDUs if
+     * the message_payload parameter is being used to send user data larger than 254 octets.
+     */
+    if (pdu->u.submit_sm.sm_length > 254) {
+        if (smpp->version > 0x33) {
+            /* put msgdata into message_payload */
+            pdu->u.submit_sm.message_payload = pdu->u.submit_sm.short_message;
+            pdu->u.submit_sm.short_message = NULL;
+            pdu->u.submit_sm.sm_length = 0;
+        } else {
+            error(0, "SMPP[%s]: Unable to send long message (%ld) Octets in smpp version < 3.4",
+                  octstr_get_cstr(smpp->conn->id), pdu->u.submit_sm.sm_length);
+            smpp_pdu_destroy(pdu);
+            return NULL;
+        }
+    }
+
     /*
      * check for validity and deferred settings
      * were message value has higher priority then smsc config group value
@@ -1131,6 +1150,9 @@ static SMPP_PDU *msg_to_pdu(SMPP *smpp, Msg *msg)
 
     dict_destroy(pdu->u.submit_sm.tlv);
     pdu->u.submit_sm.tlv = meta_data_get_values(msg->sms.meta_data, "smpp");
+
+    /* add any configured constant TLVs */
+    smpp_tlv_add_constant(smpp->conn->id, &(pdu->u.submit_sm.tlv));
 
 	return pdu;
 }
@@ -2743,11 +2765,6 @@ int smsc_smpp_create(SMSCConn *conn, CfgGroup *grp)
         panic(0, "SMPP: Invalid wait-ack-expire directive in configuration.");
 
     if (cfg_get_integer(&esm_class, grp, octstr_imm("esm-class")) == -1) {
-        esm_class = ESM_CLASS_SUBMIT_STORE_AND_FORWARD_MODE;
-    } else if ( esm_class != ESM_CLASS_SUBMIT_DEFAULT_SMSC_MODE && 
-              esm_class != ESM_CLASS_SUBMIT_STORE_AND_FORWARD_MODE ) {
-        error(0, "SMPP: Invalid esm_class mode '%ld' in configuration. Switching to \"Store and Forward\".", 
-                      esm_class);
         esm_class = ESM_CLASS_SUBMIT_STORE_AND_FORWARD_MODE;
     }
 
