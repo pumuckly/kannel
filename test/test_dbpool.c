@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -629,5 +629,9 @@ int main(int argc, char **argv)
     return 0;
 }
 
-
+#else   /* HAVE_DBPOOL */
+int main(int argc, char **argv)
+{
+    return 0;
+}
 #endif /* HAVE_DBPOOL */

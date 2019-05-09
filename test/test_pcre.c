@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -65,7 +65,7 @@
 #include <signal.h>
 
 #include "gwlib/gwlib.h"
-#include "gwlib/pcre.h"
+#include "gwlib/gw-pcre.h"
 
 #ifdef HAVE_PCRE
 
@@ -117,4 +117,9 @@ int main(int argc, char **argv)
     return 0;
 }
 
+#else
+int main(int argc, char **argv)
+{
+    return 1;
+}
 #endif

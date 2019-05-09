@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -112,6 +112,8 @@
 
 /********************* Prototypes for static functions ******************/
 
+int ws_yy_lex(YYSTYPE *yylval, YYLTYPE *yylloc, WsCompiler* compiler);
+
 /* Check whether the identifier `id', `len' is a keyword.  If the
    identifier is a keyword, the function returns WS_TRUE and sets the
    keywords token ID to `token_return'.  Otherwise the function
@@ -218,9 +220,8 @@ static int num_keywords = sizeof(keywords) / sizeof(keywords[0]);
 
 /********************* Global functions *********************************/
 
-int ws_yy_lex(YYSTYPE *yylval, YYLTYPE *yylloc, void *context)
+int ws_yy_lex(YYSTYPE *yylval, YYLTYPE *yylloc, WsCompiler* compiler)
 {
-    WsCompiler *compiler = (WsCompiler *) context;
     WsUInt32 ch, ch2;
     WsBuffer buffer;
     unsigned char *p;

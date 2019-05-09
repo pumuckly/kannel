@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-                      "http://docbook.org/xml/4.2/docbookx.dtd" [
+                      "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 <!ENTITY figtype "#FIGTYPE#">
 <!ENTITY timestamp "#DATE#">
 <!ENTITY version "#VERSION#">
@@ -4516,7 +4516,7 @@ smsc-password = foobar
      </entry></row>
 
    <row><entry><literal>window</literal></entry>
-   <entry><literal>boolean</literal></entry>
+   <entry><literal>integer</literal></entry>
    <entry valign="bottom">
       Number of concurrent sending threads. If not set,
       one thread is used.
@@ -10652,6 +10652,7 @@ smsc-id = a;b;c
 Beside defined in the configuration <literal>smpp-tlv</literal> group, SMPP also supports some hardcoded <literal>meta-data</literal>
 values:
 <itemizedlist>
+<listitem><para>data_coding</para></listitem>
 <listitem><para>source_addr_ton</para></listitem>
 <listitem><para>source_addr_npi</para></listitem>
 <listitem><para>dest_addr_ton</para></listitem>

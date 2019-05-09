@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -73,8 +73,44 @@
 #endif
 
 #if HAVE_SYSLOG_H
+#ifdef __sun__
+#include <syslog.h>
+
+typedef struct _code {
+    char *c_name;
+    int c_val;
+} CODE;
+
+CODE facilitynames[] = {
+    { "auth", LOG_AUTH },
+/*  { "authpriv", LOG_AUTHPRIV }, */
+    { "cron", LOG_CRON },
+    { "daemon", LOG_DAEMON },
+/*  { "ftp", LOG_FTP }, */
+    { "kern", LOG_KERN },
+    { "lpr", LOG_LPR },
+    { "mail", LOG_MAIL },
+/*  { "mark", INTERNAL_MARK }, */          /* INTERNAL */
+    { "news", LOG_NEWS },
+    { "security", LOG_AUTH },           /* DEPRECATED */
+    { "syslog", LOG_SYSLOG },
+    { "user", LOG_USER },
+    { "uucp", LOG_UUCP },
+    { "local0", LOG_LOCAL0 },
+    { "local1", LOG_LOCAL1 },
+    { "local2", LOG_LOCAL2 },
+    { "local3", LOG_LOCAL3 },
+    { "local4", LOG_LOCAL4 },
+    { "local5", LOG_LOCAL5 },
+    { "local6", LOG_LOCAL6 },
+    { "local7", LOG_LOCAL7 },
+    { NULL, -1 }
+};
+
+#else
 #define	SYSLOG_NAMES
 #include <syslog.h>
+#endif
 
 /*
  * Decode the syslog name to its int value

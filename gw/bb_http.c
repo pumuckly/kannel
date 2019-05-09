@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -247,8 +247,10 @@ static Octstr *httpd_graceful_restart(List *cgivars, int status_type)
         bb_restart();
         return octstr_create("Already in shutdown phase, restarting hard...");
     }
-    bb_graceful_restart();
-    return octstr_create("Restarting gracefully.....");
+    if (bb_graceful_restart() == -1)
+        return octstr_create("Unable to restart gracefully! Please check log file.");
+    else
+        return octstr_create("Restarting gracefully.....");
 }
 
 static Octstr *httpd_flush_dlr(List *cgivars, int status_type)

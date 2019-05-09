@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -269,9 +269,6 @@ typedef struct WsCompilerRec WsCompiler;
 
 /********************* Lexer and parser *********************************/
 
-#define YYPARSE_PARAM   pctx
-#define YYLEX_PARAM     pctx
-
 /* The lexer. */
 extern int yylex();
 
@@ -293,6 +290,6 @@ void ws_lexer_free_block(WsCompiler *compiler, void *ptr);
 void ws_lexer_free_utf8(WsCompiler *compiler, WsUtf8String *string);
 
 /* The parser. */
-int ws_yy_parse(void *context);
+int ws_yy_parse(WsCompiler* compiler);
 
 #endif /* not WSINT_H */

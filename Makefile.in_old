@@ -65,9 +65,6 @@ LEX = @LEX@
 PERL = @PERL@
 YACC = @YACC@
 
-# -v gives verbose output.
-YFLAGS = -d -p ws_yy_
-
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = gw-config.h
 CONFIG_CLEAN_FILES =
@@ -96,27 +93,16 @@ XML_DCL=@XML_DCL@
 # Version number is common.
 suffix = $(SUFFIX)
 
-SUBDIRS =
-
+SUBDIRS = radius wmlscript utils
 #
 # You probably don't need to touch anything below this, if you're just
 # compiling and installing the software.
 #
 
-STARTSTOPDAEMONSRC=@STARTSTOPDAEMONSRC@
-
-binsrcs = \
-	wmlscript/wmlsc.c \
-	wmlscript/wmlsdasm.c \
-	utils/seewbmp.c \
-	utils/mtbatch.c \
-	utils/decode_emimsg.c
 sbinsrcs = \
 	gw/bearerbox.c \
 	gw/smsbox.c \
-	gw/wapbox.c \
-	utils/run_kannel_box.c \
-	$(STARTSTOPDAEMONSRC)
+	gw/wapbox.c
 progsrcs = $(binsrcs) $(sbinsrcs)
 progobjs = $(progsrcs:.c=.o)
 progs = $(progsrcs:.c=@EXE_EXT@)
@@ -129,11 +115,8 @@ gwobjs = $(filter-out $(progobjs),$(gwsrcs:.c=.o))
 libsrcs = $(wildcard gwlib/*.c) $(LIBSRCS)
 libobjs = $(libsrcs:.c=.o) $(LIBOBJS)
 
-wapsrcs = $(wildcard wap/*.c) $(wildcard radius/*.c)
+wapsrcs = $(wildcard wap/*.c)
 wapobjs = $(wapsrcs:.c=.o)
-
-wmlscriptsrcs = $(wildcard wmlscript/*.c)
-wmlscriptobjs = $(wmlscriptsrcs:.c=.o)
 
 testsrcs = $(wildcard test/*.c)
 testobjs = $(testsrcs:.c=.o)
@@ -160,12 +143,11 @@ srcs = $(wildcard */*.c) $(wildcard */*/*.c)
 objs = $(srcs:.c=.o)
 pres = $(srcs:.c=.i)
 
-libs = libgw.a libwmlscript.a libwap.a libgwlib.a
+libs = libgw.a wmlscript/libwmlscript.a libwap.a libgwlib.a
 
-srcdirs = gw gw/smsc gwlib test utils wmlscript checks wap radius
+srcdirs = gw gw/smsc gwlib test checks wap
 
-man1pages = utils/seewbmp.1 utils/mtbatch.1 wmlscript/wmlsc.1 wmlscript/wmlsdasm.1
-man8pages = gw/kannel.8 utils/run_kannel_box.8
+man8pages = gw/kannel.8
 
 docsrcs = $(wildcard grep -l '<!DOCTYPE ' doc/*/*.xml)
 docs = $(docsrcs:.xml=.html) $(docsrcs:.xml=.rtf) $(docsrcs:.xml=.ps) $(docsrcs:.xml=.pdf)
@@ -235,7 +217,7 @@ figs = $(figsrcs:.fig=.png)  $(figsrcs:.fig=.ps)
 .c.i:
 	$(CC) $(CFLAGS) -o $@ -E $<
 
-all: progs $(testprogs) $(checkprogs) $(DOCSTARGET) gw-config $(SUBDIRS)
+all: $(libs) $(SUBDIRS) progs $(testprogs) $(checkprogs) $(DOCSTARGET) gw-config
 progs: $(progs)
 tests: $(testprogs)
 docs: figs ps $(docs)
@@ -332,7 +314,7 @@ nag:
 
 @SOAP_INCLUDE@
 
-depend .depend: wmlscript/wsgram.h gw-config.h $(soap_depend)
+depend .depend: gw-config.h $(soap_depend)
 	for dir in $(srcdirs); do \
 	for file in $$dir/*.c; do \
 	    $(MKDEPEND) $$file -MT $$dir/`basename $$file .c`.o -MT $$dir/`basename $$file .c`.i; done; done > .depend  
@@ -346,24 +328,15 @@ libgwlib.a: $(libobjs)
 	@OLD_LIBTOOL@  libgwlib.a $(libobjs)
 	$(RANLIB) libgwlib.a
 
-libwmlscript.a: $(wmlscriptobjs)
-	@OLD_LIBTOOL@ libwmlscript.a $(wmlscriptobjs)
-	$(RANLIB) libwmlscript.a
+radius/libradius.a:
+	$(MAKE) -C radius libradius.a
 
 libwap.a: $(wapobjs)
 	@OLD_LIBTOOL@ libwap.a $(wapobjs)
 	$(RANLIB) libwap.a
 
-wmlscript/wsgram.h: wmlscript/wsgram.c
-
-make-op-table: $(srcdir)/wmlscript/make-op-table.in
-	sed 's%@PERLPROG@%@PERL@%g' $(srcdir)/wmlscript/make-op-table.in \
-		> make-op-table
-	chmod a+x make-op-table
-
-opcodes:
-	./make-op-table $(srcdir)/wmlscript/wsasm.h \
-		> $(srcdir)/wmlscript/wsopcodes.h
+wmlscript/libwmlscript.a:
+	$(MAKE) -C wmlscript libwmlscript.a
 
 $(progs): $(libs) $(progobjs)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(@:@EXE_EXT@=).o $(libs) $(LIBS)
@@ -386,5 +359,8 @@ gw-config: utils/foobar-config.sh Makefile
 
 $(SUBDIRS):
 	$(MAKE) -C $@ $(MAKECMDGOALS)
+	
+am--refresh:
+	@:
 
-.PHONY: $(SUBDIRS)
+.PHONY: $(SUBDIRS) am--refresh

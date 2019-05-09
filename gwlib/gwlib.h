@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -97,12 +97,13 @@
 #include "protected.h"
 #include "accesslog.h"
 #include "dict.h"
-#include "semaphore.h"
+#include "gw-semaphore.h"
 #include "xmlrpc.h"
 #include "md5.h"
 #include "gw_uuid.h"
 #include "gw-rwlock.h"
 #include "gw-prioqueue.h"
+#include "gw-dlopen.h"
 
 void gwlib_assert_init(void);
 void gwlib_init(void);

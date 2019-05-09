@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -150,7 +150,7 @@ int udp_outgoing_queue(void);
 
 int smsc2_start(Cfg *config);
 int smsc2_restart(Cfg *config);
-int smsc2_graceful_restart(void);
+int smsc2_graceful_restart(Cfg *config);
 
 void smsc2_suspend(void);    /* suspend (can still send but not receive) */
 void smsc2_resume(int is_init);     /* resume */

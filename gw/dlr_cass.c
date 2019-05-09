@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -397,8 +397,8 @@ found:
     db_conf = gw_malloc(sizeof(DBConf));
     gw_assert(db_conf != NULL);
 
-    db_conf->mysql = gw_malloc(sizeof(CassConf));
-    gw_assert(db_conf->mysql != NULL);
+    db_conf->cass = gw_malloc(sizeof(CassConf));
+    gw_assert(db_conf->cass != NULL);
 
     db_conf->cass->host = host;
     db_conf->cass->port = port;

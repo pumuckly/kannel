@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -508,7 +508,7 @@ long bb_smscconn_receive(SMSCConn *conn, Msg *sms)
         if (white_list_sender &&
                 numhash_find_number(white_list_sender, sms->sms.sender) < 1) {
             gw_rwlock_unlock(&white_black_list_lock);
-            info(0, "Number <%s> is not in white-list, message discarded",
+            info(0, "Number <%s> is not in white-list-sender, message discarded",
                  octstr_get_cstr(sms->sms.sender));
             bb_alog_sms(conn, sms, "REJECTED Receive SMS - not white-listed SMS");
             msg_destroy(sms);
@@ -518,7 +518,7 @@ long bb_smscconn_receive(SMSCConn *conn, Msg *sms)
         if (white_list_sender_regex &&
                 gw_regex_match_pre(white_list_sender_regex, sms->sms.sender) == 0) {
             gw_rwlock_unlock(&white_black_list_lock);
-            info(0, "Number <%s> is not in white-list, message discarded",
+            info(0, "Number <%s> is not in white-list-sender, message discarded",
                  octstr_get_cstr(sms->sms.sender));
             bb_alog_sms(conn, sms, "REJECTED Receive SMS - not white-regex-listed SMS");
             msg_destroy(sms);
@@ -528,7 +528,7 @@ long bb_smscconn_receive(SMSCConn *conn, Msg *sms)
         if (black_list_sender &&
                 numhash_find_number(black_list_sender, sms->sms.sender) == 1) {
             gw_rwlock_unlock(&white_black_list_lock);
-            info(0, "Number <%s> is in black-list, message discarded",
+            info(0, "Number <%s> is in black-list-sender, message discarded",
                  octstr_get_cstr(sms->sms.sender));
             bb_alog_sms(conn, sms, "REJECTED Receive SMS - black-listed SMS");
             msg_destroy(sms);
@@ -536,9 +536,9 @@ long bb_smscconn_receive(SMSCConn *conn, Msg *sms)
         }
 
         if (black_list_sender_regex &&
-                gw_regex_match_pre(black_list_sender_regex, sms->sms.sender) == 0) {
+                gw_regex_match_pre(black_list_sender_regex, sms->sms.sender) != 0) {
             gw_rwlock_unlock(&white_black_list_lock);
-            info(0, "Number <%s> is not in black-list, message discarded",
+            info(0, "Number <%s> is in black-list-sender, message discarded",
                  octstr_get_cstr(sms->sms.sender));
             bb_alog_sms(conn, sms, "REJECTED Receive SMS - black-regex-listed SMS");
             msg_destroy(sms);
@@ -576,9 +576,9 @@ long bb_smscconn_receive(SMSCConn *conn, Msg *sms)
         }
 
         if (black_list_receiver_regex &&
-                gw_regex_match_pre(black_list_receiver_regex, sms->sms.receiver) == 0) {
+                gw_regex_match_pre(black_list_receiver_regex, sms->sms.receiver) != 0) {
             gw_rwlock_unlock(&white_black_list_lock);
-            info(0, "Number <%s> is not in black-list-receiver, message discarded",
+            info(0, "Number <%s> is in black-list-receiver, message discarded",
                  octstr_get_cstr(sms->sms.receiver));
             bb_alog_sms(conn, sms, "REJECTED Receive SMS - black-regex-listed SMS");
             msg_destroy(sms);
@@ -1215,7 +1215,7 @@ int smsc2_reload_lists(void)
         } else {
             gw_rwlock_wrlock(&white_black_list_lock);
             numhash_destroy(black_list_receiver);
-            black_list_sender = tmp;
+            black_list_receiver = tmp;
             gw_rwlock_unlock(&white_black_list_lock);
         }
     }
@@ -1519,7 +1519,7 @@ Octstr *smsc2_status(int status_type)
 }
 
 
-int smsc2_graceful_restart(void)
+int smsc2_graceful_restart(Cfg *cfg)
 {
     CfgGroup *grp;
     SMSCConn *conn;
@@ -1533,10 +1533,8 @@ int smsc2_graceful_restart(void)
     gw_rwlock_wrlock(&smsc_list_lock);
 
     /* load the smsc groups from the config resource */
-    if (bb_reload_smsc_groups() != 0) {
-        gw_rwlock_unlock(&smsc_list_lock);
-        return -1;
-    }
+    gwlist_destroy(smsc_groups, NULL);
+    smsc_groups = cfg_get_multi_group(cfg, octstr_imm("smsc"));
 
     /* List of SMSCConn that we keep running */
     keep = gwlist_create();
@@ -1737,7 +1735,7 @@ long smsc2_rout(Msg *msg, int resend)
     gw_rwlock_rdlock(&white_black_list_lock);
     if (white_list_sender && numhash_find_number(white_list_sender, msg->sms.sender) < 1) {
         gw_rwlock_unlock(&white_black_list_lock);
-        info(0, "Number <%s> is not in white-list, message rejected",
+        info(0, "Number <%s> is not in white-list-sender, message rejected",
              octstr_get_cstr(msg->sms.sender));
         bb_smscconn_send_failed(NULL, msg_duplicate(msg), SMSCCONN_FAILED_REJECTED, octstr_create("sender not in white-list"));
         return SMSCCONN_FAILED_REJECTED;
@@ -1745,7 +1743,7 @@ long smsc2_rout(Msg *msg, int resend)
 
     if (white_list_sender_regex && gw_regex_match_pre(white_list_sender_regex, msg->sms.sender) == 0) {
         gw_rwlock_unlock(&white_black_list_lock);
-        info(0, "Number <%s> is not in white-list, message rejected",
+        info(0, "Number <%s> is not in white-list-sender, message rejected",
              octstr_get_cstr(msg->sms.sender));
         bb_smscconn_send_failed(NULL, msg_duplicate(msg), SMSCCONN_FAILED_REJECTED, octstr_create("sender not in white-list"));
         return SMSCCONN_FAILED_REJECTED;
@@ -1753,15 +1751,15 @@ long smsc2_rout(Msg *msg, int resend)
 
     if (black_list_sender && numhash_find_number(black_list_sender, msg->sms.sender) == 1) {
         gw_rwlock_unlock(&white_black_list_lock);
-        info(0, "Number <%s> is in black-list, message rejected",
+        info(0, "Number <%s> is in black-list-sender, message rejected",
              octstr_get_cstr(msg->sms.sender));
         bb_smscconn_send_failed(NULL, msg_duplicate(msg), SMSCCONN_FAILED_REJECTED, octstr_create("sender in black-list"));
         return SMSCCONN_FAILED_REJECTED;
     }
 
-    if (black_list_sender_regex && gw_regex_match_pre(black_list_sender_regex, msg->sms.sender) == 0) {
+    if (black_list_sender_regex && gw_regex_match_pre(black_list_sender_regex, msg->sms.sender) != 0) {
         gw_rwlock_unlock(&white_black_list_lock);
-        info(0, "Number <%s> is not in black-list, message rejected",
+        info(0, "Number <%s> is in black-list-sender, message rejected",
              octstr_get_cstr(msg->sms.sender));
         bb_smscconn_send_failed(NULL, msg_duplicate(msg), SMSCCONN_FAILED_REJECTED, octstr_create("sender in black-list"));
         return SMSCCONN_FAILED_REJECTED;
@@ -1791,9 +1789,9 @@ long smsc2_rout(Msg *msg, int resend)
         return SMSCCONN_FAILED_REJECTED;
     }
 
-    if (black_list_receiver_regex && gw_regex_match_pre(black_list_receiver_regex, msg->sms.receiver) == 0) {
+    if (black_list_receiver_regex && gw_regex_match_pre(black_list_receiver_regex, msg->sms.receiver) != 0) {
         gw_rwlock_unlock(&white_black_list_lock);
-        info(0, "Number <%s> is not in black-list-receiver, message rejected",
+        info(0, "Number <%s> is in black-list-receiver, message rejected",
              octstr_get_cstr(msg->sms.receiver));
         bb_smscconn_send_failed(NULL, msg_duplicate(msg), SMSCCONN_FAILED_REJECTED, octstr_create("receiver in black-list"));
         return SMSCCONN_FAILED_REJECTED;

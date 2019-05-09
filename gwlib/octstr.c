@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -1447,7 +1447,7 @@ void octstr_shrink_blanks(Octstr *text)
             j = i = i + 1;
             while (isspace(octstr_get_char(text, j)))
                 j ++;
-            if (j - i > 1)
+            if (j - i > 0)
                 octstr_delete(text, i, j - i);
         }
     }

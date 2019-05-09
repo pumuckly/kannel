@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -70,7 +70,7 @@
 #include <ctype.h>
 
 #include "gwlib/gwlib.h"
-#include "pcre.h"
+#include "gw-pcre.h"
 
 #ifdef HAVE_PCRE
 

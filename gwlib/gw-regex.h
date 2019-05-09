@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -70,8 +70,8 @@
  * Stipe Tolj <stolj@kannel.org>
  */
 
-#ifndef REGEX_H
-#define REGEX_H
+#ifndef GW_REGEX_H
+#define GW_REGEX_H
 
 #ifdef HAVE_PCRE
 # include <pcreposix.h>
@@ -192,6 +192,6 @@ Octstr *gw_regex_subst_pre_real(const regex_t *preg, const Octstr *os, const Oct
 
 
 #endif
-#endif  /* REGEX_H */
+#endif  /* GW_REGEX_H */
 
 

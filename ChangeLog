@@ -1,150 +1,66 @@
-2017-10-13  Stipe Tolj  <stolj at kannel.org>
-    * doc/userguide/userguide.xml: document 'const' directive in context
-      group 'smpp-tlv'.
-    * gw/smsc/smpp_pdu.[ch]: implement smpp_tlv_add_constant() to add any
-      configured constant values if the corresponding TLV values have not been
-      set via the meta-data part.
-    * gw/smsc/smsc_smpp.c: call smpp_tlv_add_constant() to set contant values.
-    * gwlib/cfg.def: add 'const' to 'group = smpp-tlv'.
-    
-2017-09-26  Stipe Tolj  <stolj at kannel.org>
-    * gwlib/dbpool_redis.c: fix segfaulting when under high load and stopping
-      redis-server connections.
+2019-01-21 Alexander Malysh <
+    * gw/bb_boxc.c: fixed small mem leak wile initializing of box_allow_ip/box_deny_ip.
+      Thanks to Paul Bagyenda for report.
 
-2017-07-19 Alexander Malysh <amalysh at kannel.org>
-    * gw/smsc/smsc_smpp.c: Fixed sending of long messages.
-      This fixes #769.
-
-2017-06-16  Stipe Tolj  <stolj at kannel.org>
-    * doc/userguide/userguide.xml: add documentation for config directives
-      'ssl-[client|server]-cipher-list'.
-    * gwlib/cfg.def: add above config directives to 'group = core'.
-    * gwlib/conn.[ch]: ensure openssl engine cleanup is performed more cleanly,
-      this avoids various static memory leaks reported by valgrind, and add
-      encryption suite and cipher select/de-select configuration.
-    This patchset allows configuring the SSL/TLS client/server side connection
-    by defining which suites and ciphers should be used. The corresponding
-    cipher stings are defined in the openssl documentation part.
-    
-2017-04-11  Stipe Tolj  <stolj at kannel.org>
-    * gw/smsc/http/generic.c: provides the missing MO part for the generic type
-      from the patchset dated 2017-03-14, allowing to send UTF-8 data, which
-      can then be forwarded as UCS-2 towards the smsbox connection. We transcode
-      ONLY if an alt-charset is set and a coding value has been provided.
-
-2017-04-10  Stipe Tolj  <stolj at kannel.org>
-    * gw/smsc/smsc_http.c: fix transcoding by using UTF-16BE as UCS-2 encoding 
-      indication.
-
-2017-03-14  Stipe Tolj  <stolj at kannel.org>
-    * doc/userguide/userguide.xml: remove 'wapme' reference for HTTP SMSC type.
-    * gw/smsc/smsc_http.c: re-considering an older issue, when having UCS2 
-      payload from the smsbox connection side. All major HTTP API will NEED
-      a unique encoding that is injected, and we will use 'alt-charset = UTF-8'
-      to allow setting a config diretive to convert ANY encoding to UTF-8
-      towards the upstream, which reflects an unique input encoding, otherwise
-      there is no way to distinguish this. This allows keeping the currentlogic 
-      if no 'alt-charset' is set. 
-    * gw/smsc/http/wapme.c: removed the 'wapme' type as it is dead for quite 
-      some time now.
-    This patchset ensures that we have a construct (via setting a config
-    directive, alt-charset) to uniquely provision MTs to the upstream SMSC.
-    [Msg-Id: <4D76BF9C.7070700@tolj.org>]
+2018-11-22  Stipe Tolj  <stolj at kannel.org>
+    * gwlib/date.c: fix case where, struct universaltime element offset_sec may
+      be initialized with random value on MacOS X 10.11.x (clang-800.0.42.1), 
+      but is then used  in the following up call to date_convert_universal(), so 
+      make sure we set this to zero as we're handlign GMT times anyway. NLC.
       
-2017-02-22  Stipe Tolj  <stolj at kannel.org>
-    * gwlib/http.c: fix missing keep-alive indication when we DO keep the 
-      connection persistent as a server, cleaned up the corresponding 
-      negotiation constraint to fit the RFC2616 requirement.
-      
-2017-01-04  Stipe Tolj  <stolj at kannel.org>
-    * gw/msg.h: add msg admin 'cmd_feature' to allow passing feature on/off 
-      commands within the inter-box communication. NLC.
-      
-2017-01-10 Alexander Malysh <amalysh at kannel.org>
-    * gwlib/octstr.c: deleted immutable assert from octstr_cat.
-
-2016-12-13  Stipe Tolj  <stolj at kannel.org>
-    * gw/smsc/smsc_http.c: fixing asymetric load distribution for this SMSC 
-      type if there is a large set of non-relevant SMSCs groups and a set of
-      relevant groups, the first group would be systematically prefered, which
-      leads to an un-even distribution. The load is now set as with the other
-      SMSC types based on the queue size.
-      
-2016-12-06  Stipe Tolj  <stolj at kannel.org>
-    * doc/userguide/userguide.xml: indicate the terminus SSMPP for secure SMPP.
-    * gw/smsc/smsc_smpp.c: indicate 'SSMPP' for secure SMPP connections.
+2018-11-03  Stipe Tolj  <stolj at kannel.org>
+    * gw/smsbox.c: re-intend smsbox_req_handle(). NLC.
     
-2016-11-14 Alexander Malysh <amalysh at kannel.org>
-    * gw/smsbox.c, gw/smsc/smsc_cimd2.c, gw/smsc/smsc_smpp.c: applied patch to support
-      DLR_EXPIRED. Thanks to Iwan Iwanowicz <iwan41 at gmail.com> for the patch.
+2018-10-01  Stipe Tolj  <stolj at kannel.org>
+    * gw/bb_boxc.c: use init_smsbox_routes() for initial and reload cases, use
+      smsbox_restart() to reload smsbox routing.
+    * gw/bb_http.c: interpret bb_graceful_restart() outcome in HTTP admin command
+      function httpd_graceful_restart().
+    * gw/bearerbox.c: use gw_log_force() for starting/stopping log evetns that
+      we want to see in the log, no matter waht log-level is used (forced),
+      reload config in bb_graceful_restart() and call the sub-module reload
+      functions.
+    * gw/bearebox.h: change prototype for smsc2_graceful_restart().
+    Thhis patchsets implement the reloading (aka graceful restart) capabilities
+    for the MO direction smsbox routing groups.
 
-2016-10-26 Alexander Malysh <amalysh at kannel.org>
-    * gw/smsc/smpp_pdu.c: applied patch that fixes memory leak if TLV is sent twice.
-      Thanks to Donald for this patch.
+2018-09-26 Alexander Malysh <amalysh @ kannnel.org>
+    * gwlib/date.[ch]: added handling of fraction
 
-2016-08-22 Alexander Malysh <amalysh at kannel.org>
-    * gw/load.c: fixed load calculation
+2018-09-26 Alexander Malysh <amalysh @ kannnel.org>
+    * gwlib/date.[ch]: added handling of timezone
 
-2016-08-04 Alexander Malysh <amalysh at kannel.org>
-    * gwlib/xmlrpc.c: fixed crash if wrong formated xml given
+2018-09-25  Stipe Tolj  <stolj at kannel.org>
+   * gwlib/http.c: fixing PANIC condition within conn_unregister() in case the
+     connection was destroyed already.
+     [Msg-Id: <5B964593.1070105@kannel.org>]
+     
+2018-09-07 Alexander Malysh <amalysh @ kannnel.org>
+   * gw/smsc/smsc_http.c, gw/smsc/smsc_http_p.h, gw/smsc/http/*.c: moved kannel
+     callbacks to gw/smsc/http/kannel.c. Added gw/smsc/http/*.c to Makefile.am
+     and use new gw_dlopen_get_symbol to get callback symbols.
 
-2016-08-04 Alexander Malysh <amalysh at kannel.org>
-    * gw/dlr.[ch]: added DLR_EXPIRED and DLR_UNKNOWN dlr mask
+2018-09-07 Alexander Malysh <amalysh @ kannnel.org>
+   * gwlib/gw-dlopen.[ch]: added simple dlopen lookup functionality.
 
-2016-08-04 Alexander Malysh <amalysh at kannel.org>
-    * gwlib/gwthread-pthread.c: fixed memory leak and panic if new thread could
-      not be created
-
-2016-07-14 Alexander Malysh <amalysh at kannel.org>
-    * gw/load.[ch]: Changed precision timing to microsec.
-      Thanks to kneodev at gmail.com for initial patch.
-
-2016-07-13  Stipe Tolj  <stolj at kannel.org>
-    * gwlib/dbpool_mysql.c: fix error code handling for mysql_stmt_execute(). 
-      The function returns CR_ error codes, we need to call _stmt_errno() to get
-      the server side ER_ error codes and retry on temporary ones.
-       
-2016-05-26  Stipe Tolj  <stolj at kannel.org>
-    * gwlib/dbpool.h: add missing define for Cassandra.
-    
-2016-05-09  Stipe Tolj  <stolj at kannel.org>
-    * gw/smsc/smsc_smpp.c: relax SMPP DLR scanning for a better pattern match.
-    [Msg-Id: <5720AAD1.2000500@kannel.org>]
-    
-2016-04-14  Stipe Tolj  <stolj at kannel.org>
-    * doc/userguide/userguide.xml: add documentation for escape code '%e'.
-    * gw/urltrans.c: add escape code '%e' for printable hexadecimal byte codes.
-    
-2016-02-15  Stipe Tolj  <stolj at kannel.org>
-    * gw/dlr.c: add missing original DLR bit-mask forwarding in case of 
-      DLR SMSC[SUCCESS|FAIL] events.
-      
-2015-12-22 Alexander Malysh <amalysh at kannel.org>
-    * gwlib/conn.[ch]: renamed some ssl init functions to be in conn_XXX namespace.
-      test/test_http.c: implemented cmd line option to provide CA file.
-
-2015-12-21 Alexander Malysh <amalysh at kannel.org>
-    * gw/bb_smscconn.c: fixed MO concatenation handling for rerouting cases.
-
-2015-12-17  Stipe Tolj  <stolj at kannel.org>
-    * doc/examples/dlr-mysql.conf: add comment block describing an advanced
-      configuraiton for MySQL with scheduled events for DLR table clean-up.
-      
-2015-12-17  Stipe Tolj  <stolj at kannel.org>
-    * doc/examples/dlr-cassandra.conf: example for Cassandra.
-    * doc/userguide/userguide.xml: documentation for Cassandra support.
-    * gw/dlr_cass.c: adding DLR handling via Cassandra.
-    * gw/dlr_p.h: adding dlr_init_cass() prototype.
-    * gw/dlr.c: add 'spool = cassandra'.
-    * gwlib/cfg.def: adding 'group = cassandra-connection' context.
-    * gwlib/dbpool_cass.c: adding Cassandra DBPool support via DataStax C/C++
-      Cassandra driver library.
-    * gwlib/dbpool.[ch]: include Cassandra handling.
-    * test/test_dbpool.c: add Cassandra testing capabilities.
-    * configure[.in]: adding --with-cassandra and --with-cassandra-dir
-    * gw-config.h.in: define HAVE_CASS
-    This patchset adds support for the Apache Cassandra 2.1, 2.2 and 3.0
-    database engine. Initially DLRs can be stored in the database.
+2018-09-07  Stipe Tolj  <stolj at kannel.org>
+   * configure.in: removing own binary suffix handling, automake provides an own
+     construct for this.
+     [https://www.gnu.org/software/automake/manual/automake.html#Renaming]
+     
+2018-09-04  Stipe Tolj  <stolj at kannel.org>
+   * test/test_http.c: fix compiler warnings. NLC.
+   
+2018-09-04  Stipe Tolj  <stolj at kannel.org>
+   * test/fakewap.c: cast panic() output to fix compiler warning on 64bit.
+  
+2018-09-04  Stipe Tolj  <stolj at kannel.org>
+   * doc/doxygen/kannel.conf: re-tag the config with the current svn snapshot 
+     revision number.
+     
+2018-08-30  Stipe Tolj  <stolj at kannel.org>
+   * test/test_dbpool.c: fix compiler warning/error in case we compile without
+     any DB support. NLC.
      
 2015-12-14  Stipe Tolj  <stolj at kannel.org>
     * doc/examples/store-redis.conf: add documentation for the 'hash' config

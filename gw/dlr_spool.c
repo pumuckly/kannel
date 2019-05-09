@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -124,21 +124,14 @@ static Octstr *our_hash_func(Octstr *os)
 {
 #ifdef HAVE_LIBSSL
     /* use openssl's SHA1 */
-    EVP_MD_CTX mdctx;
-    const EVP_MD *md;
-    unsigned char md_value[EVP_MAX_MD_SIZE];
-    unsigned int md_len;
+    unsigned char hash[20];
     Octstr *ret;
 
-    md = EVP_get_digestbyname("sha1");
-
-    EVP_MD_CTX_init(&mdctx);
-    EVP_DigestInit_ex(&mdctx, md, NULL);
-    EVP_DigestUpdate(&mdctx, octstr_get_cstr(os), octstr_len(os));
-    EVP_DigestFinal_ex(&mdctx, md_value, &md_len);
-    EVP_MD_CTX_cleanup(&mdctx);
-
-    ret = octstr_create_from_data((char*) md_value, md_len);
+    memset(hash, 0, sizeof(hash));
+    
+    SHA1((const unsigned char *)octstr_get_cstr(os), octstr_len(os), hash);
+    
+    ret = octstr_create_from_data((const char*)hash, sizeof(hash));
     octstr_binary_to_hex(ret, 0);
     return ret;
 #else

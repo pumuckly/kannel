@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -82,7 +82,7 @@
 #include <sys/socket.h>
 
 #include "gwlib.h"
-#include "gwlib/regex.h"
+#include "gwlib/gw-regex.h"
 
 /* comment this out if you don't want HTTP responses to be dumped */
 #define DUMP_RESPONSE 1
@@ -1115,7 +1115,12 @@ static void handle_transaction(Connection *conn, void *data)
         }
     }
 
-    conn_unregister(trans->conn);
+    /*
+     * Connection may have been destroyed within send_request,
+     * so be more carefull here not to panic.
+     */
+    if (trans->conn)
+        conn_unregister(trans->conn);
 
     /* 
      * Take care of persistent connection handling. 
@@ -3577,7 +3582,6 @@ void http_init(void)
     gw_assert(run_status == limbo);
 
 #ifdef HAVE_LIBSSL
-    openssl_init_locks();
     conn_init_ssl();
 #endif /* HAVE_LIBSSL */
     proxy_init();
@@ -3606,7 +3610,6 @@ void http_shutdown(void)
     port_shutdown();
     proxy_shutdown();
 #ifdef HAVE_LIBSSL
-    openssl_shutdown_locks();
     conn_shutdown_ssl();
     server_shutdown_ssl();
 #endif /* HAVE_LIBSSL */

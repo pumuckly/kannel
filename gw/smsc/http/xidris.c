@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Kannel Software License, Version 1.0
  *
- * Copyright (c) 2001-2016 Kannel Group
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.
  * All rights reserved.
  *
@@ -63,6 +63,16 @@
  */
 
 #include "gwlib/gwlib.h"
+#include "smscconn.h"
+#include "smscconn_p.h"
+#include "bb_smscconn_cb.h"
+#include "msg.h"
+#include "sms.h"
+#include "dlr.h"
+#include "urltrans.h"
+#include "meta_data.h"
+
+#include "../smsc_http_p.h"
 
 /*
  * Parse for an parameter of an given XML tag and return it as Octstr

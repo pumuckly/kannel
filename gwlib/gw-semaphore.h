@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -61,8 +61,8 @@
  */
 
 
-#ifndef SEMAPHORE_H
-#define SEMAPHORE_H
+#ifndef GW_SEMAPHORE_H
+#define GW_SEMAPHORE_H
 
 
 typedef struct Semaphore Semaphore;

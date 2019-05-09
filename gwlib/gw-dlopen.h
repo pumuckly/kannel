@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Kannel Software License, Version 1.0
  *
- * Copyright (c) 2001-2016 Kannel Group
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.
  * All rights reserved.
  *
@@ -54,76 +54,13 @@
  * WapIT Ltd., Helsinki, Finland for the Kannel project.
  */
 
-/*----------------------------------------------------------------
- * Wapme SMS Proxy
- *
- * Stipe Tolj <stolj@kannel.org>
- */
-
-#include "gwlib/gwlib.h"
-
-
-static int wapme_smsproxy_send_sms(SMSCConn *conn, Msg *sms)
-{
-    ConnData *conndata = conn->data;
-    Octstr *url;
-    List *headers;
-
-    url = octstr_format("%S?command=forward&smsText=%E&phoneNumber=%E"
-                        "&serviceNumber=%E&smsc=%E",
-                        conndata->send_url,
-                        sms->sms.msgdata, sms->sms.sender, sms->sms.receiver,
-                        sms->sms.smsc_id);
-
-    headers = gwlist_create();
-    debug("smsc.http.wapme", 0, "HTTP[%s]: Start request",
-          octstr_get_cstr(conn->id));
-    http_start_request(conndata->http_ref, HTTP_METHOD_GET, url, headers,
-                       NULL, 0, sms, NULL);
-
-    octstr_destroy(url);
-    http_destroy_headers(headers);
-
-    return 0;
-}
-
-static void wapme_smsproxy_parse_reply(SMSCConn *conn, Msg *msg, int status,
-                   List *headers, Octstr *body)
-{
-    if (status == HTTP_OK || status == HTTP_ACCEPTED) {
-        bb_smscconn_sent(conn, msg, NULL);
-    } else {
-        bb_smscconn_send_failed(conn, msg,
-                SMSCCONN_FAILED_MALFORMED, octstr_duplicate(body));
-    }
-}
-
 /*
- * static void wapme_smsproxy_receive_sms(SMSCConn *conn, HTTPClient *client,
- *                                List *headers, Octstr *body, List *cgivars)
- *
- * The HTTP server for MO messages will act with the same interface as smsbox's
- * sendsms interface, so that the logical difference is hidden and SMS Proxy
- * can act transparently. So there is no need for an explicite implementation
- * here.
+ * Alexander Malysh 2018 for Project Kannel
  */
 
-static int wapme_smsproxy_init(SMSCConn *conn, CfgGroup *cfg)
-{
-    ConnData *conndata = conn->data;
+#ifndef GW_DLOPEN_H
+#define GW_DLOPEN_H
 
-    if (conndata->username == NULL || conndata->password == NULL) {
-        error(0, "HTTP[%s]: 'username' and 'password' required for Wapme http smsc",
-              octstr_get_cstr(conn->id));
-        return -1;
-    }
-    return 0;
-}
+int gw_dlopen_get_symbol(const char *lib_path, const char *name, void **result);
 
-struct smsc_http_fn_callbacks smsc_http_wapme_callback = {
-        .init = wapme_smsproxy_init,
-        .send_sms = wapme_smsproxy_send_sms,
-        .parse_reply = wapme_smsproxy_parse_reply,
-        .receive_sms = kannel_receive_sms,
-};
-
+#endif

@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -98,6 +98,41 @@ int main(int argc, char **argv)
     info(0, "%s : %04ld%02ld%02ldT%02ld:%02ld:%02ld", octstr_get_cstr(s), ut.year, ut.month+1, ut.day, ut.hour, ut.minute, ut.second);
     octstr_destroy(s);
     
+    s = octstr_create("20090210T10:02:03Z");
+    if (date_parse_iso(&ut, s) == -1) {
+        panic(0, "date_parse_iso failed: %s", octstr_get_cstr(s));
+    }
+    info(0, "%s : %04ld%02ld%02ldT%02ld:%02ld:%02ld+%ld", octstr_get_cstr(s), ut.year, ut.month+1, ut.day, ut.hour, ut.minute, ut.second, ut.offset_sec);
+    octstr_destroy(s);
+
+    s = octstr_create("20090210T10:02:03+01:00");
+    if (date_parse_iso(&ut, s) == -1) {
+        panic(0, "date_parse_iso failed: %s", octstr_get_cstr(s));
+    }
+    info(0, "%s : %04ld%02ld%02ldT%02ld:%02ld:%02ld+%ld", octstr_get_cstr(s), ut.year, ut.month+1, ut.day, ut.hour, ut.minute, ut.second, ut.offset_sec);
+    octstr_destroy(s);
+
+    s = octstr_create("20090210T10:02:03-01:00");
+    if (date_parse_iso(&ut, s) == -1) {
+        panic(0, "date_parse_iso failed: %s", octstr_get_cstr(s));
+    }
+    info(0, "%s : %04ld%02ld%02ldT%02ld:%02ld:%02ld%+ld", octstr_get_cstr(s), ut.year, ut.month+1, ut.day, ut.hour, ut.minute, ut.second, ut.offset_sec);
+    octstr_destroy(s);
+
+    s = octstr_create("20090210T10:02:03-01:15");
+    if (date_parse_iso(&ut, s) == -1) {
+        panic(0, "date_parse_iso failed: %s", octstr_get_cstr(s));
+    }
+    info(0, "%s : %04ld%02ld%02ldT%02ld:%02ld:%02ld%+ld", octstr_get_cstr(s), ut.year, ut.month+1, ut.day, ut.hour, ut.minute, ut.second, ut.offset_sec);
+    octstr_destroy(s);
+
+    s = octstr_create("20090210T10:02:03,375-01:15");
+    if (date_parse_iso(&ut, s) == -1) {
+        panic(0, "date_parse_iso failed: %s", octstr_get_cstr(s));
+    }
+    info(0, "%s : %04ld%02ld%02ldT%02ld:%02ld:%02ld%+ld", octstr_get_cstr(s), ut.year, ut.month+1, ut.day, ut.hour, ut.minute, ut.second, ut.offset_sec);
+    octstr_destroy(s);
+
     gwlib_shutdown();
     return 0;
 }

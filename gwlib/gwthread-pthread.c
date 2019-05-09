@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -338,9 +338,11 @@ static void new_thread_cleanup(void *arg)
           p->ti->number, p->ti->name);
     alert_joiners();
 #ifdef HAVE_LIBSSL
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     /* Clear the OpenSSL thread-specific error queue to avoid
      * memory leaks. */
     ERR_remove_state(gwthread_self());
+#endif
 #endif /* HAVE_LIBSSL */
     /* Must free p before signaling our exit, otherwise there is
      * a race with gw_check_leaks at shutdown. */

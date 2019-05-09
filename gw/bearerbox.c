@@ -1,7 +1,7 @@
 /* ==================================================================== 
  * The Kannel Software License, Version 1.0 
  * 
- * Copyright (c) 2001-2016 Kannel Group  
+ * Copyright (c) 2001-2019 Kannel Group
  * Copyright (c) 1998-2001 WapIT Ltd.   
  * All rights reserved. 
  * 
@@ -953,7 +953,19 @@ int bb_restart(void)
 
 int bb_graceful_restart(void)
 {
-    return smsc2_graceful_restart();
+    Cfg *cfg;
+
+    info(0, "Reloading configuration resource `%s'.", octstr_get_cstr(cfg_filename));
+    cfg = cfg_create(cfg_filename);
+    if (cfg_read(cfg) == -1) {
+        error(0, "Error processing configuration resource `%s'. Continue with existing configuration.",
+              octstr_get_cstr(cfg_filename));
+        return -1;
+    }
+
+    smsc2_graceful_restart(cfg);
+    smsbox_restart(cfg);
+    return 0;
 }
 
 int bb_reload_lists(void)
